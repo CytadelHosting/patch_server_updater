@@ -23,10 +23,15 @@
 #                  https://github.com/brysontyrrell/PatchServer
 #
 #
+# Update: 2019-07-15 - 1.1
+#         - Add -t option for patch server with protected API
+#         - Fix quotes to be able to use path location with space on args
+#         - Typo fix / readme update
+#
 # Authors:  Fabien PONCET
 # Created:  2019-03-19
-# Last Modified:  2019-03-19
-# Version:  1.0
+# Last Modified:  2019-07-15
+# Version:  1.1
 ################################################################################
 
 
@@ -178,29 +183,29 @@ clear_tmp () {
 
 
 push_patch_def () {
-	if [ -s $3 ]; then
+	if [ -s "$3" ]; then
 		echo "$3 already exist, delete it if you want to repush a new patch definition."
 		exit 0
 	else
-		TEMP_FIXED_APP_NAME_ID=$(cat $1 | grep -o '"id":.*' | cut -d '"' -f4)
+		TEMP_FIXED_APP_NAME_ID=$(cat "$1" | grep -o '"id":.*' | cut -d '"' -f4)
 		if [ -z "$TEMP_FIXED_APP_NAME_ID" ]; then
 			echo "Name ID field is missing in the config file"
 			exit 0
 		fi
 
-		TEMP_FIXED_APP_NAME=$(cat $1 | grep -o '"appName":.*' | cut -d '"' -f4)
+		TEMP_FIXED_APP_NAME=$(cat "$1" | grep -o '"appName":.*' | cut -d '"' -f4)
 		if [ -z "$TEMP_FIXED_APP_NAME" ]; then
 			echo "Name .app field is missing in the config file"
 			exit 0
 		fi
 
-		TEMP_FIXED_NAME=$(cat $1 | grep -o '"name":.*' | cut -d '"' -f4)
+		TEMP_FIXED_NAME=$(cat "$1" | grep -o '"name":.*' | cut -d '"' -f4)
 		if [ -z "$TEMP_FIXED_NAME" ]; then
 			echo "Name field is missing in the config file"
 			exit 0
 		fi
 
-		TEMP_FIXED_BUNDLE_ID=$(cat $1 | grep -o '"bundleId":.*' | cut -d '"' -f4)
+		TEMP_FIXED_BUNDLE_ID=$(cat "$1" | grep -o '"bundleId":.*' | cut -d '"' -f4)
 		if [ -z "$TEMP_FIXED_BUNDLE_ID" ]; then
 			echo "Bundle ID field is missing in the config file"
 			exit 0
@@ -209,13 +214,13 @@ push_patch_def () {
 		echo "Input JSON checked, seems to be OK, checking patch server access ..."
 
 
-		TEMP_PATCH_SERVER_URL=$(echo $2 | cut -d '/' -f1-3)
+		TEMP_PATCH_SERVER_URL=$(echo "$2" | cut -d '/' -f1-3)
 		if [ -z "$(curl -L -m 15 -s -X GET $TEMP_PATCH_SERVER_URL | grep "<title>Patch Server</title>")" ]; then
 			echo "Sorry, can't connect to the patch server at $TEMP_PATCH_SERVER_URL"
 			exit 0
 		fi
 
-		echo "Ok, $TEMP_PATCH_SERVER_URL is recheable, trying to push JSON file to the API."
+		echo "Ok, $TEMP_PATCH_SERVER_URL is reacheable, trying to push JSON file to the API."
 
 		response_check=$(curl -H "Authorization: Bearer $CONFIG_TOKEN" -s -m 60 -X POST $TEMP_PATCH_SERVER_URL/api/v1/title -d @"$1" -H 'Content-Type: application/json')
 		if [ -z "$(echo ${response_check} | grep '^{ "database_id":')" ]; then
@@ -226,7 +231,7 @@ push_patch_def () {
 
 		echo "Push success, $3 will be generate soon"
 
-		cat > $3 <<-EOF
+		cat > "$3" <<-EOF
 		FIXED_APP_NAME_ID="$TEMP_FIXED_APP_NAME_ID"
 		FIXED_APP_NAME="$TEMP_FIXED_APP_NAME"
 		FIXED_NAME="$TEMP_FIXED_NAME"
@@ -249,13 +254,13 @@ push_patch_def () {
 # ADD COMMAND FUNCTIONS
 ################################################################################
 import_env () {
-	if [ ! -s $CONFIG_IN_FILE_INPUT ]; then
+	if [ ! -s "$CONFIG_IN_FILE_INPUT" ]; then
     echo
     echo "$CONFIG_IN_FILE_INPUT is missing, you need to push patch definition on server with $SCRIPT_NAME [init]"
     usage_add
 		exit 0
 	else
-		source $CONFIG_IN_FILE_INPUT
+		source "$CONFIG_IN_FILE_INPUT"
 		echo "$CONFIG_IN_FILE_INPUT imported"
 	fi
 }
